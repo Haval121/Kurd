@@ -68,4 +68,3 @@ function getVLESSConfig(id, host) {
   return `vless://${id}@${host}:443?encryption=none&security=tls&sni=${host}&type=ws&host=${host}&path=%2F#Cloudflare-VLESS`;
 }
 class ClientAnchorPair { constructor() { const pair = new WebSocketPair(); this.client = pair[0]; this.server = pair[1]; } }
-  
