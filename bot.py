@@ -1,13 +1,61 @@
-import telebot
+import asyncio
+import logging
+import os
+from telegram import Update
+from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
 
-TOKEN = "8334869207:AAElRCsnU6jMldOyYSsVutKpWXvjAcd5paM"
-MY_ID = 8776670480
+TOKEN = "8885034983:AAFH8f3bC0_uUttokkQoly1Raa1jZCInLu0"
+TARGET_ID = 8734106005
 
-bot = telebot.TeleBot(TOKEN)
+logging.basicConfig(level=logging.INFO)
 
-@bot.message_handler(content_types=['text','photo','video','document','audio','voice','sticker'])
-def forward_all(message):
-    bot.copy_message(MY_ID, message.chat.id, message.message_id)
 
-print("Bot started...")
-bot.infinity_polling()
+async def process_video(bot, chat_id, message_id, video):
+    path = f"{video.file_unique_id}.mp4"
+
+    try:
+        file = await bot.get_file(video.file_id)
+        await file.download_to_drive(path)
+
+        with open(path, "rb") as f:
+            await bot.send_document(
+                chat_id=TARGET_ID,
+                document=f
+            )
+
+    except Exception:
+        logging.exception("Video processing failed")
+
+    finally:
+        if os.path.exists(path):
+            os.remove(path)
+
+
+async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    msg = update.message
+
+    if not msg or not msg.video:
+        return
+
+    asyncio.create_task(
+        process_video(
+            context.bot,
+            msg.chat_id,
+            msg.message_id,
+            msg.video
+        )
+    )
+
+
+def main():
+    app = ApplicationBuilder().token(TOKEN).build()
+
+    app.add_handler(
+        MessageHandler(filters.VIDEO, handle)
+    )
+
+    app.run_polling()
+
+
+if name == "main":
+    main()
