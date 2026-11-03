@@ -1,22 +1,19 @@
-import os
-from pyrogram import Client, filters
-from pyrogram.types import Message
+import logging
+from telegram import Update
+from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, filters
 
-# زانیارییە تایبەتەکانت کە دابووت
-API_ID = 36234377
-API_HASH = "5e199e2ae89cc1c42a6a4853951ff98f"
+# توکەنی بۆتەکەت
 BOT_TOKEN = "8370918902:AAG2tXhRwDlBP4UhTgB80CBWww7HUgccqmk"
 
-# دروستکردنی کۆمستەنسی بۆتەکە
-app = Client(
-    "video_save_bot",
-    api_id=API_ID,
-    api_hash=API_HASH,
-    bot_token=BOT_TOKEN
+# ڕێکخستنی لاگین (Logging) بۆ بینینی هەڵەکان
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 
-@app.on_message(filters.command("save") & filters.group)
-async def save_video_handler(client: Client, message: Message):
+async def save_video_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    message = update.effective_message
+    user = update.effective_user
+    
     # پشکنین بۆ ئەوەی بزانین پەیامەکە ڕایپڵەی کراوە یان نا
     if not message.reply_to_message:
         await message.reply_text("تکایە ئەم فەرمانە بە **ڕایپڵەی** کردن لەسەر ڤیدیۆ بنووسە.")
@@ -35,23 +32,39 @@ async def save_video_handler(client: Client, message: Message):
         await message.reply_text("❌ ئەم پەیامەی ڕایپڵەت کردووە ڤیدیۆ نییە!")
         return
 
-    user_id = message.from_user.id
+    user_id = user.id
+    user_mention = user.mention_html()
 
     try:
         # ناردنی ڤیدیۆکە بۆ چاتی تایبەتی بە file_id
-        await client.send_video(
+        await context.bot.send_video(
             chat_id=user_id,
             video=file_id,
             caption=caption
         )
         
         # وەڵامدانەوە لە گروپدا بە مێنشن کردنی بەکارهێنەرەکە
-        await message.reply_text(f"✅ {message.from_user.mention}، ڤیدیۆکەت بۆ نێردرا بۆ چاتی تایبەتی (Private)!")
+        await message.reply_text(
+            f"✅ {user_mention}، ڤیدیۆکەت بۆ نێردرا بۆ چاتی تایبەتی (Private)!",
+            parse_mode="HTML"
+        )
     
     except Exception as e:
         # ئەگەر کەسەکە چاتی بۆتەکە نەکردبێتەوە
         await message.reply_text("⚠️ ناتوانم ڤیدیۆکەت بۆ بنێرم. تکایە سەرەتا سەردانی چاتی تایبەتی بۆت بکە و (Start)ـی بکە.")
 
-# دەستپێکردنی بۆت
-print("Bot is up and running...")
-app.run()
+def main():
+    # دروستکردنی ئەپلیکەیشنی بۆت
+    application = ApplicationBuilder().token(BOT_TOKEN).build()
+
+    # زیادکردنی فەرمانەکە بۆ گروپەکان تەنها
+    group_filter = filters.ChatType.GROUPS & filters.command("save")
+    application.add_handler(CommandHandler("save", save_video_handler, filters=group_filter))
+
+    print("Bot is up and running...")
+    # دەستپێکردنی بۆت
+    application.run_polling()
+
+if __name__ == "__main__":
+    main()
+    
