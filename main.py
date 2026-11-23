@@ -1,7 +1,7 @@
 import telebot
 from openai import OpenAI
 
-BOT_TOKEN = "8670204681:AAGm7q4lckaaWGSxI_A2XsphtzaDvLBYqj8"
+BOT_TOKEN = "8670204681:AAHSY36xruqYzPksQyyH7BgRMk3W1jCnEgo"
 API_BASE_URL = "https://api.notrack.ai/v1"
 API_KEY = "sk-notrack-93d1aea5cb8360688f1840f62dcaf2fe5e02117a476406ec"
 MODEL_NAME = "notrack-uncensored"
