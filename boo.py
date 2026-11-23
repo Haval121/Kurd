@@ -74,7 +74,7 @@ def handle_chat(message):
 
     except Exception as e:
         history.pop()
-        bot.reply_to(message, f"⚠️ کێشەیەک لە پەیوەندیکردن بە API ڕوویدا:\n{e}")
+        bot.reply_to(message, f"⚠️ کێشەیەک لە پەوەندیکردن بە API ڕوویدا:\n{e}")
 
 
 if __name__ == "__main__":
