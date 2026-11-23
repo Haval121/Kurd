@@ -41,7 +41,7 @@ def handle_clear(message):
     user_histories[user_id] = [
         {"role": "system", "content": "You are a helpful AI assistant."}
     ]
-    bot.reply_to(message, "✅ مێژووی گفتوگۆکەت سڕایەوە.")
+    bot.reply_to(message, "✅ مێژووی گفتوگۆکەت سڕاەوە.")
 
 
 @bot.message_handler(func=lambda msg: True, content_types=["text"])
