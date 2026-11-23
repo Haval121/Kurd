@@ -1,14 +1,13 @@
+import time
+import requests
 import telebot
-from openai import OpenAI
 
 BOT_TOKEN = "8670204681:AAHSY36xruqYzPksQyyH7BgRMk3W1jCnEgo"
-API_BASE_URL = "https://api.notrack.ai/v1"
+API_URL = "https://api.notrack.ai/v1/chat/completions"
 API_KEY = "sk-notrack-93d1aea5cb8360688f1840f62dcaf2fe5e02117a476406ec"
 MODEL_NAME = "notrack-uncensored"
 
 bot = telebot.TeleBot(BOT_TOKEN)
-client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
-
 user_histories = {}
 MAX_HISTORY = 20
 
@@ -41,7 +40,7 @@ def handle_clear(message):
     user_histories[user_id] = [
         {"role": "system", "content": "You are a helpful AI assistant."}
     ]
-    bot.reply_to(message, "✅ مێژووی گفتوگۆکەت سڕاەوە.")
+    bot.reply_to(message, "✅ مێژووی گفتوگۆکەت سڕایەوە.")
 
 
 @bot.message_handler(func=lambda msg: True, content_types=["text"])
@@ -62,11 +61,21 @@ def handle_chat(message):
         history = user_histories[user_id]
 
     try:
-        response = client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=history,
+        res = requests.post(
+            API_URL,
+            headers={
+                "Authorization": f"Bearer {API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": MODEL_NAME,
+                "messages": history,
+            },
+            timeout=60,
         )
-        reply_text = response.choices[0].message.content or "وەڵامێک نەگەڕایەوە."
+        res.raise_for_status()
+        data = res.json()
+        reply_text = data["choices"][0]["message"]["content"] or "وەڵامێک نەگەڕایەوە."
         history.append({"role": "assistant", "content": reply_text})
 
         for i in range(0, len(reply_text), 4096):
@@ -74,10 +83,19 @@ def handle_chat(message):
 
     except Exception as e:
         history.pop()
-        bot.reply_to(message, f"⚠️ کێشەیەک لە پەوەندیکردن بە API ڕوویدا:\n{e}")
+        bot.reply_to(message, f"⚠️ کێشەیەک لە پەیوەندیکردن بە API ڕوویدا:\n{e}")
 
 
 if __name__ == "__main__":
     print("Bot is running...")
-    bot.infinity_polling(skip_pending=True)
-    
+    while True:
+        try:
+            bot.infinity_polling(
+                skip_pending=False,
+                timeout=25,
+                long_polling_timeout=25,
+            )
+        except Exception as e:
+            print(f"Polling error: {e}")
+            time.sleep(20)
+            
